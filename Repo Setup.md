@@ -70,8 +70,5 @@ Bash
 git config --global user.name "Satoshi Sugizaki"
 git config --global user.email "your_email@example.com"
 
-4. ヴェルデからのメモ
-今日の検証で、Gitの**「データ保存の仕組み（ローカル）」と「外部への道（リモート）」**を完全に切り分けて理解することができました。 特に、「エラーが出た理由」をフォルダ単位の仕組み（.git の存在）まで掘り下げて理解できた点は大きな収穫です。
 
-Next Step: 次は「ブランチの切り替え（git switch）」や「複数人での共同作業（git pull）」へステップアップする準備が整っています。
 
