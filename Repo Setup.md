@@ -1,4 +1,4 @@
-# Gitリポジトリ登録方法（20260201）
+# Gitリポジトリ登録方法（2026年度版）　2026/2/15追記
 
 ## 1. 習得した主要コマンドリスト
 本日の検証で使用したコマンドと、エンジニアとして押さえておくべき意味のまとめです。
@@ -6,70 +6,58 @@
 | コマンド | 意味 | プロの補足 |
 | :--- | :--- | :--- |
 | `git init` | Gitリポジトリの初期化 | `.git`フォルダが作成され、管理が開始される。 |
-| `ls -al` | 全ファイルの詳細表示 | 隠しファイル（`.git`や`.DS_Store`）を確認するために必須。 |
 | `git status` | 状態確認 | 作業の区切りごとに必ず打つ癖をつけること。 |
 | `git add .` | ステージング（全対象） | 変更された全てのファイルを「コミット予定」にする。 |
 | `git commit -m "msg"` | コミット（保存） | メッセージと共にローカルに歴史を刻む。 |
-| `git remote add origin [URL]` | リモート登録（新規） | GitHubの宛先を `origin` という名で登録する。 |
-| `git remote set-url origin [URL]` | リモート登録（上書き） | 既存の `origin` の宛先だけを変更する（エラー回避に有効）。 |
-| `git remote -v` | 接続先確認 | 登録されたURLが正しいか確認する。 |
-| `git push -u origin main` | 初回プッシュ | `-u` で紐付けを行うと、次回から `git push` だけで済む。 |
-| `rm -rf [dir]` | フォルダ強制削除 | 検証環境のリセット用。実行時は現在地に注意。 |
+| `git checkout -b [name]` | ブランチ作成＆移動 | **[重要]** `main`を汚さず作業を開始する鉄板の第一歩。 |
+| `git push -u origin [name]` | ブランチの初回送信 | ローカルの作業用ブランチをGitHubへ同期させる。 |
+| `git remote add origin [URL]` | リモート登録 | GitHubの宛先を `origin` という名で登録する。 |
+| `git reset --hard origin/main` | 強制同期（リセット） | 送れなかった不要なコミットを捨て、GitHubの状態に合わせる。 |
+| `git pull origin main` | 最新情報の取り込み | 他のメンバーがマージした内容を手元に反映する。 |
 
 ---
 
-## 2. 実験と検証の記録（Case Study）
+## 2. チーム開発への進化：コラボレーターとブランチ保護
 
-### 実験①：`test` リポジトリの作成（基本フロー）
-- **目的**：最初のGitHub連携テスト。
-- **手順**：`git init` → `git add` → `git commit` → `git remote add` → `git push`。
-- **結果**：成功。`index.html` がGitHubへ正しく反映された。
+### 実験①：コラボレーター（Collaborator）の招待
+- **目的**: 自分以外のエンジニアをプロジェクトに招き入れる。
+- **手順**: `Settings` → `Collaborators` → `Add people`。
+- **学び**: 招待には7日間の期限があり、相手が承認して初めて権限が有効になる。
 
-### 実験②：`test2` での重複エラー検証（トラブルシュート）
-- **現象**：`git remote add origin ...` を実行した際、以下のエラーが発生。
-  ```text
-  error: remote origin already exists.
+### 実験②：ブランチ保護ルール（Rulesets）の構築
+- **目的**: 事故（直プッシュによる破壊）を物理的に防ぐ。
+- **設定**: 
+  - **Target**: `Include default branch` (main)
+  - **Rules**: `Require a pull request before merging` (PR必須)
+  - **Approvals**: `1` (1人以上の承認を必須化)
+- **結果**: 意図しない直接の `push` をブロックすることに成功。
 
-原因：
-ログに Reinitialized existing Git repository とある通り、過去にこのフォルダで git init を実行済みだった。
-そのため、古い origin 設定が .git/config 内に残っており、新規登録と衝突した。
+### 実験③：ルール違反による `push` 拒否の解決（トラブルシュート）
+- **現象**: `main` ブランチで直接 `push` した際、GitHubに拒否された。
+- **解決手順**:
+  1. `git checkout -b fix-repo-setup` で作業用ブランチに避難。
+  2. `git push -u origin fix-repo-setup` でGitHubへ送信。
+  3. GitHub上で **Pull Request** を作成し、承認を経てマージ。
+  4. 手元の `main` を `git reset --hard origin/main` で浄化。
+- **教訓**: エラーメッセージは「ルールが正しく守ってくれている証拠」である。
 
-学びと解決策：
-原則：設定はフォルダ（.git）ごとに独立して管理されている。
-解決策：既存の設定がある場合は add（追加）ではなく set-url（上書き）を使うのがプロの定石。
-コマンド：git remote set-url origin [新しいURL]
+---
 
-実験③：test3 でのクリーンな構築（ベストプラクティス）
-手順：
-新規フォルダ作成 (mkdir test3)
-初期化 (git init)
-ファイル作成 (README.md)
+## 3. 2026年最新AIツールの使い分けガイド
 
-記録 (git commit)
-紐付けと送信 (git push -u origin main)
-結果：成功。
-成果：過去のゴミファイルや設定に邪魔されない、最も綺麗な手順を確立。
+エンジニアとして効率を最大化するための、ヴェルデ推奨の使い分けです。
 
-3. 発生したトラブルと解決策
-⚠️ コマンド入力ミス
-エラー：-bash: remote: command not found
-原因：git remote ... と打つべきところを、先頭の git を忘れて remote ... と入力したため。
-対策：コマンドは必ず git から始まることを意識する。
+| AIサービス | 得意分野 | おすすめのシーン |
+| :--- | :--- | :--- |
+| **Claude** | コード生成精度、論理的思考、Artifacts | プログラミング、デバッグ、設計相談 |
+| **Genspark** | 検索エージェント、まとめページ作成 | 技術リサーチ、比較資料の自動作成 |
+| **Gemini** | Google連携、超長文解析 | 仕様書の読み込み、Workspace連携 |
+| **Local LLM** | オフライン動作、プライバシー保護 | 機密コードの解析（Ollama + Qwen等） |
 
-⚠️ Mac特有の不要ファイル混入
-現象：git add . をした際、.DS_Store というMacのシステムファイルもステージングされてしまった。
-対策：プロジェクト開始直後に .gitignore ファイルを作成し、中に .DS_Store と記述してから git add を行う。
+---
 
-⚠️ ユーザー名設定の警告
-現象：初回コミット時に、Gitがユーザー名とEmailを自動設定した旨のメッセージが表示された。
-対策：以下のコマンドで自分の署名を固定する。
+## 4. ヴェルデからのメモ
+今日の検証で、Gitの「データ保存の仕組み」だけでなく、**「チームでコードを守るための運用（PRベース開発）」** を完全に理解することができました。
+個人開発のやり方から、プロの現場のスタンダードへと一気にステップアップした一日です。
 
-Bash
-git config --global user.name "Satoshi Sugizaki"
-git config --global user.email "your_email@example.com"
-
-4. ヴェルデからのメモ
-今日の検証で、Gitの**「データ保存の仕組み（ローカル）」と「外部への道（リモート）」**を完全に切り分けて理解することができました。 特に、「エラーが出た理由」をフォルダ単位の仕組み（.git の存在）まで掘り下げて理解できた点は大きな収穫です。
-
-Next Step: 次は「ブランチの切り替え（git switch）」や「複数人での共同作業（git pull）」へステップアップする準備が整っています。
-
+**Next Step**: 次は、GitHub Actionsを使って「PRを作った瞬間に自動でテストを走らせる（CI）」の自動化に挑戦する準備ができています。
